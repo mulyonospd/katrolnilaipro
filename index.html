@@ -294,17 +294,16 @@
         
         tr { background: #1e293b; }
         .light-mode tr { background: white; }
-        .row-empty { background-color: #0f172a; color: #475569; }
-        .light-mode .row-empty { background-color: #f8fafc; color: #94a3b8; }
-
-        /* Highlight untuk Nilai Max & Min & Kosong Diapit */
-        .row-max-highlight { background-color: rgba(16, 185, 129, 0.25) !important; font-weight: 900; }
-        .row-min-highlight { background-color: rgba(239, 68, 68, 0.25) !important; font-weight: 900; }
-        .row-empty-highlight { background-color: rgba(245, 158, 11, 0.25) !important; }
+        /* Highlight KHUSUS untuk Cell Nilai Asli */
+        .cell-max-highlight { background-color: rgba(16, 185, 129, 0.25) !important; font-weight: 900; border-radius: 4px; }
+        .cell-min-highlight { background-color: rgba(239, 68, 68, 0.25) !important; font-weight: 900; border-radius: 4px; }
+        .cell-empty-highlight { background-color: rgba(245, 158, 11, 0.25) !important; border-radius: 4px; }
+        .cell-empty { background-color: #0f172a; color: #475569; }
         
-        .light-mode .row-max-highlight { background-color: rgba(16, 185, 129, 0.2) !important; }
-        .light-mode .row-min-highlight { background-color: rgba(239, 68, 68, 0.2) !important; }
-        .light-mode .row-empty-highlight { background-color: rgba(245, 158, 11, 0.2) !important; }
+        .light-mode .cell-max-highlight { background-color: rgba(16, 185, 129, 0.2) !important; }
+        .light-mode .cell-min-highlight { background-color: rgba(239, 68, 68, 0.2) !important; }
+        .light-mode .cell-empty-highlight { background-color: rgba(245, 158, 11, 0.2) !important; }
+        .light-mode .cell-empty { background-color: #f8fafc; color: #94a3b8; }
 
         /* Sticky Action Bar */
         .sticky-actions {
@@ -468,7 +467,7 @@
 
     <!-- Tombol Aksi (Sticky) -->
     <div class="sticky-actions glass-panel p-2 mb-3 flex flex-wrap justify-between gap-2 shadow-lg border-b border-slate-600 light-mode:border-slate-300">
-        <div class="flex gap-2 flex-grow justify-start">
+        <div class="flex gap-2 flex-1 justify-start">
             <button onclick="addRombelUI()" class="btn-glossy btn-success flex-1 md:flex-none">➕ Rombel</button>
             <button onclick="openTemplateModal()" class="btn-glossy bg-indigo-600 hover:bg-indigo-500 flex-1 md:flex-none">⬇️ Template</button>
             <div class="file-upload-wrapper flex-1 md:flex-none">
@@ -476,7 +475,13 @@
                 <input type="file" id="mainFileInput" accept=".xlsx, .xls" onchange="handleMainUpload(event)">
             </div>
         </div>
-        <div class="flex gap-2 flex-grow justify-end">
+        
+        <!-- Visitor Counter -->
+        <div class="flex justify-center items-center my-2 md:my-0 w-full md:w-auto order-last md:order-none opacity-80 hover:opacity-100 transition-opacity">
+            <div align=center><a href='https://www.counter12.com'><img src='https://www.counter12.com/img-y2952xzY77A9Bw0Z-2.gif' border='0' alt='web counter free'></a><script type='text/javascript' src='https://www.counter12.com/ad.js?id=y2952xzY77A9Bw0Z'></script></div>
+        </div>
+
+        <div class="flex gap-2 flex-1 justify-end">
             <!-- Tombol Traktir Kopi -->
             <button onclick="openKopiModalAction()" class="btn-glossy bg-yellow-500 hover:bg-yellow-400 text-yellow-900 flex-1 md:flex-none animate-pulse">☕ Traktir Kopi</button>
             <button onclick="openExportModal()" class="btn-glossy bg-teal-600 hover:bg-teal-500 flex-1 md:flex-none">💾 Simpan</button>
@@ -1216,12 +1221,12 @@
                 const isBelowKKM = !isEmpty && d.raw < kkm;
                 const isKatrolBelow = d.katrol !== null && d.katrol < kkm;
                 
-                let rowClass = '';
+                let cellClass = '';
                 if (isEmpty) {
-                    rowClass = d._isDiapitKosong ? 'row-empty-highlight' : 'row-empty';
+                    cellClass = d._isDiapitKosong ? 'cell-empty-highlight' : 'cell-empty';
                 } else if (numMax !== null && numMin !== null) {
-                    if (d.raw === numMax) rowClass = 'row-max-highlight';
-                    else if (d.raw === numMin) rowClass = 'row-min-highlight';
+                    if (d.raw === numMax) cellClass = 'cell-max-highlight';
+                    else if (d.raw === numMin) cellClass = 'cell-min-highlight';
                 }
 
                 let rawStyle = isBelowKKM ? "color:#ef4444; font-weight:900;" : "font-bold";
@@ -1236,9 +1241,9 @@
                 }
 
                 tableRows += `
-                    <tr class="${rowClass}">
+                    <tr>
                         <td class="font-bold w-12">${d.no}</td>
-                        <td style="${rawStyle}">${isEmpty ? '-' : d.raw}</td>
+                        <td class="${cellClass}" style="${rawStyle}">${isEmpty ? '-' : d.raw}</td>
                         <td style="${katrolStyle}">
                             <div class="flex items-center justify-center gap-1">
                                 <span>${d.katrol === null || String(d.katrol).trim() === "" ? '-' : d.katrol}</span>
@@ -1278,12 +1283,12 @@
                     const isBelowKKM = !isEmpty && d.raw < kkm;
                     const isKatrolBelow = d.katrol !== null && d.katrol < kkm;
                     
-                    let rowClass = '';
+                    let cellClass = '';
                     if (isEmpty) {
-                        rowClass = d._isDiapitKosong ? 'row-empty-highlight' : 'row-empty';
+                        cellClass = d._isDiapitKosong ? 'cell-empty-highlight' : 'cell-empty';
                     } else if (numMax !== null && numMin !== null) {
-                        if (d.raw === numMax) rowClass = 'row-max-highlight';
-                        else if (d.raw === numMin) rowClass = 'row-min-highlight';
+                        if (d.raw === numMax) cellClass = 'cell-max-highlight';
+                        else if (d.raw === numMin) cellClass = 'cell-min-highlight';
                     }
 
                     let rawStyle = isBelowKKM ? "color:#ef4444; font-weight:900;" : "font-bold";
@@ -1298,9 +1303,9 @@
                     }
 
                     tableRows += `
-                        <tr class="${rowClass}">
+                        <tr>
                             <td class="font-bold w-12">${d.no}</td>
-                            <td style="${rawStyle}">${isEmpty ? '-' : d.raw}</td>
+                            <td class="${cellClass}" style="${rawStyle}">${isEmpty ? '-' : d.raw}</td>
                             <td style="${katrolStyle}">
                                 <div class="flex items-center justify-center gap-1">
                                     <span>${d.katrol === null || String(d.katrol).trim() === "" ? '-' : d.katrol}</span>
