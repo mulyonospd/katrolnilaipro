@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katrol Nilai Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Library QRCode Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            /* Tema Gelap Default - Gradasi lebih cantik dan lebih terang */
+            --bg-dark: linear-gradient(135deg, #1e293b 0%, #4338ca 50%, #0f172a 100%);
+            /* Tema Terang - Gradasi pastel cantik */
+            --bg-light: linear-gradient(135deg, #e0e7ff 0%, #fce7f3 50%, #d1fae5 100%);
+            
+            --panel-dark: rgba(30, 41, 59, 0.95);
+            --panel-light: rgba(255, 255, 255, 0.95);
+            
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        html {
+            font-size: 16px;
+            transition: font-size 0.2s ease;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            transition: background 0.4s ease, color 0.4s ease;
+            min-height: 100vh;
+        }
+
+        body.light-mode {
+            background: var(--bg-light);
+            color: #0f172a;
+        }
+
+        .glass-panel {
+            background: var(--panel-dark);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .light-mode .glass-panel {
+            background: var(--panel-light);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Tombol Glossy */
+        .btn-glossy {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            cursor: pointer;
+            border: none;
+            color: white;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            white-space: nowrap;
+        }
+        .btn-glossy::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            border-radius: inherit;
+        }
+        .btn-glossy:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); }
+        .btn-glossy:active { transform: translateY(1px); }
+        .btn-glossy:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: grayscale(100%); }
+
+        .btn-primary { background-color: var(--primary); }
+        .btn-success { background-color: var(--success); }
+        .btn-warning { background-color: var(--warning); color: #78350f; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-info { background-color: #0284c7; }
+
+        /* Sembunyikan Arrow pada Input Number */
+        input[type="number"]::-webkit-outer-spin-button, 
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .input-soft {
+            width: 100%;
+            padding: 0.35rem 0.6rem;
+            border-radius: 0.5rem;
+            border: 1px solid #475569;
+            background: rgba(15, 23, 42, 0.6);
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .input-soft:focus { outline: none; border-color: var(--primary); background: rgba(30, 41, 59, 1); }
+
+        .light-mode .input-soft {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+        .light-mode .input-soft:focus { border-color: var(--primary); background: white; }
+
+        /* Input Kapsul Simetris */
+        .input-capsule {
+            width: 65px;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.5rem;
+            border: 1px solid #475569;
+            background: rgba(15, 23, 42, 0.8);
+            color: #f8fafc;
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .input-capsule:focus { outline: none; border-color: var(--primary); background: rgba(30, 41, 59, 1); }
+        .input-capsule:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .light-mode .input-capsule {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+        .light-mode .input-capsule:focus { border-color: var(--primary); background: white; }
+
+        /* Efek Menyala (Glowing) untuk N Max dan N Min jika Mandiri (Non-Global) */
+        .glowing-active-max {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.6), inset 0 0 5px rgba(16, 185, 129, 0.4) !important;
+            animation: pulseMax 2s infinite alternate;
+        }
+        .glowing-active-min {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.6), inset 0 0 5px rgba(239, 68, 68, 0.4) !important;
+            animation: pulseMin 2s infinite alternate;
+        }
+        @keyframes pulseMax {
+            0% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+            100% { box-shadow: 0 0 14px rgba(16, 185, 129, 0.8); }
+        }
+        @keyframes pulseMin {
+            0% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+            100% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.8); }
+        }
+
+        /* Segmented Control */
+        .segmented-control {
+            display: flex;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #475569;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .light-mode .segmented-control {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        .segment-btn {
+            flex: 1;
+            text-align: center;
+            padding: 0.2rem 0;
+            font-size: 10px;
+            font-weight: 800;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-right: 1px solid #475569;
+            user-select: none;
+        }
+        .segment-btn:last-child { border-right: none; }
+        .light-mode .segment-btn { border-color: #cbd5e1; color: #64748b; }
+        .segment-btn:hover { background: rgba(59, 130, 246, 0.2); color: white; }
+        .light-mode .segment-btn:hover { background: rgba(59, 130, 246, 0.1); color: #0f172a; }
+        .segment-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .light-mode .segment-btn.active { background: var(--primary); color: white; }
+
+        /* Badge Kapsul untuk Statistik */
+        .stat-capsule {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #475569;
+            background: rgba(15, 23, 42, 0.5);
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+        .light-mode .stat-capsule {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        /* Toast Popup Notifikasi */
+        #toastNotice {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 200;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: #ef4444;
+            color: white;
+            font-weight: 800;
+            font-size: 0.85rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Layout Rombel */
+        .horizontal-scroll-container { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; align-items: flex-start; }
+        
+        /* Flex Card Layout (Tampil Semua Full Baris Tanpa Scroll) */
+        .rombel-card { 
+            flex: 0 0 auto; 
+            width: 380px; 
+            height: auto; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        } 
+
+        .rombel-header-static {
+            flex-shrink: 0;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid #475569;
+            padding: 0.4rem 0.5rem;
+            z-index: 10;
+        }
+        .light-mode .rombel-header-static {
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        /* Container Tabel Full Height */
+        .table-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        /* Table CSS */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+        th, td { padding: 0.25rem 0.4rem; text-align: center; border-bottom: 1px solid #334155; }
+        .light-mode th, .light-mode td { border-bottom-color: #e2e8f0; }
+        
+        /* Sticky Table Header */
+        th { 
+            position: sticky; 
+            top: 0; 
+            background: #0f172a; 
+            font-weight: 800; 
+            color: #cbd5e1; 
+            z-index: 5;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .light-mode th { 
+            background: #f1f5f9; 
+            color: #334155; 
+            border-bottom: 2px solid #3b82f6;
+        }
+        
+        tr { background: #1e293b; }
+        .light-mode tr { background: white; }
+        .row-empty { background-color: #0f172a; color: #475569; }
+        .light-mode .row-empty { background-color: #f8fafc; color: #94a3b8; }
+
+        /* Highlight untuk Nilai Max & Min & Kosong Diapit */
+        .row-max-highlight { background-color: rgba(16, 185, 129, 0.25) !important; font-weight: 900; }
+        .row-min-highlight { background-color: rgba(239, 68, 68, 0.25) !important; font-weight: 900; }
+        .row-empty-highlight { background-color: rgba(245, 158, 11, 0.25) !important; }
+        
+        .light-mode .row-max-highlight { background-color: rgba(16, 185, 129, 0.2) !important; }
+        .light-mode .row-min-highlight { background-color: rgba(239, 68, 68, 0.2) !important; }
+        .light-mode .row-empty-highlight { background-color: rgba(245, 158, 11, 0.2) !important; }
+
+        /* Sticky Action Bar */
+        .sticky-actions {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(12px);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-content {
+            background: var(--panel-dark); border-radius: 1rem; padding: 1.5rem;
+            max-width: 500px; width: 90%; border: 1px solid #475569; color: white;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .light-mode .modal-content { background: var(--panel-light); border-color: transparent; color: #0f172a; }
+
+        .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; cursor: pointer; }
+        .file-upload-wrapper input[type="file"] { position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .light-mode ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+
+        /* Style Judul Kolom Top Panel Glowing */
+        .top-panel-title {
+            font-size: 0.8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: center;
+            color: #60a5fa;
+            text-shadow: 0 0 8px rgba(96, 165, 250, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding-bottom: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .light-mode .top-panel-title {
+            color: #1d4ed8;
+            text-shadow: 0 0 6px rgba(29, 78, 216, 0.3);
+            border-bottom-color: rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="p-3 md:p-4">
+
+    <!-- Toast Notification -->
+    <div id="toastNotice">⚠️ Hanya angka positif yang diperbolehkan!</div>
+
+    <!-- Header (Responsive, Non Sticky) -->
+    <!-- h-[60px] pada desktop, font size = 60% dari 60px = 36px -->
+    <div class="glass-panel flex flex-col md:flex-row justify-between items-center p-2.5 mb-2.5 gap-3 relative h-auto md:h-[60px]">
+        <!-- Kiri: Logo & Judul -->
+        <div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start order-2 md:order-1">
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-base md:text-lg shadow-lg transform rotate-3 flex-shrink-0">📈</div>
+            <h1 class="font-extrabold tracking-tight text-blue-400 light-mode:text-blue-700 flex items-center" style="font-size: 36px; line-height: 1;">Katrol Nilai Pro</h1>
+        </div>
+
+        <!-- Tengah: Waktu Realtime Online MENYALA -->
+        <div class="text-center font-extrabold bg-slate-900 light-mode:bg-white px-3 py-1.5 rounded-lg border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] w-full md:w-auto md:absolute md:left-1/2 md:transform md:-translate-x-1/2 order-1 md:order-2">
+            <span id="realtimeClock" class="text-xs sm:text-sm text-yellow-400 light-mode:text-yellow-600 tracking-wider font-mono font-black drop-shadow-md">00:00:00 Senin, 1 Januari 2026</span>
+        </div>
+
+        <!-- Kanan: Petunjuk, Tema, Zoom -->
+        <div class="flex items-center gap-2 w-full md:w-auto justify-center md:justify-end order-3">
+            <!-- Tombol Petunjuk -->
+            <button onclick="openModal('helpModal')" class="btn-glossy bg-blue-600 hover:bg-blue-500 flex items-center justify-center transition-all shadow-md w-9 h-9 md:w-10 md:h-10" style="padding: 0; font-size: 1.25rem;" title="Petunjuk Penggunaan">❓</button>
+            
+            <button onclick="toggleTheme()" class="btn-glossy bg-slate-600 hover:bg-slate-500 flex items-center justify-center transition-all shadow-md w-9 h-9 md:w-10 md:h-10" id="themeToggle" style="padding: 0; font-size: 1.25rem;" title="Ganti Tema">☀️</button>
+            <div class="flex items-center bg-slate-800 light-mode:bg-white rounded-lg border border-slate-700 light-mode:border-slate-300 p-0.5 shadow-sm h-9 md:h-10">
+                <button onclick="changeFontSize(-1)" class="w-7 h-full flex items-center justify-center font-black text-sm text-slate-300 hover:text-white light-mode:text-slate-700 hover:bg-slate-700 light-mode:hover:bg-slate-100 rounded" title="Perkecil Font">➖</button>
+                <span id="fontSizeDisplay" class="text-xs font-bold px-1.5 min-w-[36px] text-center">100%</span>
+                <button onclick="changeFontSize(1)" class="w-7 h-full flex items-center justify-center font-black text-sm text-slate-300 hover:text-white light-mode:text-slate-700 hover:bg-slate-700 light-mode:hover:bg-slate-100 rounded" title="Perbesar Font">➕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3 Kolom 3 Baris Konfigurasi (Padding Dikecilkan Lebih Padat) -->
+    <div class="glass-panel p-2.5 mb-2.5 text-base">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            
+            <!-- Kolom 1: Data Awal -->
+            <div class="flex flex-col gap-2 bg-slate-800/60 light-mode:bg-white/60 p-2.5 rounded-xl border border-slate-600 light-mode:border-slate-300 shadow-sm">
+                <h3 class="top-panel-title">Data Awal</h3>
+                <div class="flex items-center justify-between gap-2">
+                    <label class="text-xs font-bold w-1/3">Mapel</label>
+                    <input type="text" id="mapel" class="input-soft w-2/3" placeholder="Contoh Matematika X">
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <label class="text-xs font-bold w-1/3">Guru</label>
+                    <input type="text" id="guru" class="input-soft w-2/3" placeholder="Contoh Mulyono, S.Pd">
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <label class="text-xs font-bold text-blue-400 light-mode:text-blue-600 w-1/3">KKM / KKTP</label>
+                    <input type="text" id="globalKkm" class="input-soft w-2/3 !text-blue-400 light-mode:!text-blue-600 font-black !text-base" value="75" onkeydown="filterPositiveNumber(event)" onkeyup="handleEnterGlobal(event)" onchange="validateGlobalTargets(this, 'kkm')">
+                </div>
+            </div>
+
+            <!-- Kolom 2: Setting -->
+            <div class="flex flex-col gap-2 bg-slate-800/60 light-mode:bg-white/60 p-2.5 rounded-xl border border-slate-600 light-mode:border-slate-300 shadow-sm">
+                <h3 class="top-panel-title">Setting Nilai Global</h3>
+                <div class="flex items-center justify-between gap-2">
+                    <label class="text-xs font-bold w-1/3">Skala</label>
+                    <select id="skala" class="input-soft w-2/3" onchange="confirmSkalaChange(this)">
+                        <option value="100">Puluhan (0-100)</option>
+                        <option value="10">Satuan (0-10)</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <label class="text-xs font-bold text-green-400 light-mode:text-green-600 w-1/3">N. Max</label>
+                    <input type="text" id="globalMax" class="input-soft w-2/3 font-black !text-base text-green-400 light-mode:text-green-600" value="95" onkeydown="filterPositiveNumber(event)" onkeyup="handleEnterGlobal(event)" onchange="validateGlobalTargets(this, 'max')" data-last="95">
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <label class="text-xs font-bold text-red-400 light-mode:text-red-600 w-1/3">N. Min</label>
+                    <input type="text" id="globalMin" class="input-soft w-2/3 font-black !text-base text-red-400 light-mode:text-red-600" value="75" onkeydown="filterPositiveNumber(event)" onkeyup="handleEnterGlobal(event)" onchange="validateGlobalTargets(this, 'min')" data-last="75">
+                </div>
+            </div>
+
+            <!-- Kolom 3: Rekap & Mode -->
+            <div class="flex flex-col gap-2 bg-slate-800/60 light-mode:bg-white/60 p-2.5 rounded-xl border border-slate-600 light-mode:border-slate-300 shadow-sm">
+                <h3 class="top-panel-title">Opsi & Rekap</h3>
+                
+                <div class="flex justify-between items-center bg-slate-900/50 light-mode:bg-slate-100 p-1.5 rounded-lg gap-2 h-9 border border-slate-700 light-mode:border-slate-300 shadow-inner">
+                    <div class="text-xs font-bold text-slate-300 light-mode:text-slate-700 flex-1 text-center border-r border-slate-700 light-mode:border-slate-300">
+                        Total Rombel = <span class="text-blue-400 font-black text-sm ml-1" id="dashTotalRombel">0</span>
+                    </div>
+                    <div class="text-xs font-bold text-slate-300 light-mode:text-slate-700 flex-1 text-center">
+                        Nilai Kosong/0 = <span class="text-yellow-400 font-black text-sm ml-1" id="dashTotalKosong">0</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 h-9 bg-slate-900/50 light-mode:bg-slate-100 p-1.5 rounded-lg">
+                    <label class="text-xs font-bold text-slate-300 light-mode:text-slate-700">Hasil Desimal</label>
+                    <div class="segmented-control" style="width: 55%;">
+                        <!-- Default active = OFF (0 desimal) -->
+                        <div class="segment-btn active" id="btnDes0" onclick="setDesimal(0)">Off</div>
+                        <div class="segment-btn" id="btnDes1" onclick="setDesimal(1)">1 Angka</div>
+                        <div class="segment-btn" id="btnDes2" onclick="setDesimal(2)">2 Angka</div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-2 h-9 bg-slate-900/50 light-mode:bg-slate-100 p-1.5 rounded-lg">
+                    <label class="text-xs font-bold text-slate-300 light-mode:text-slate-700">Katrol Terpusat</label>
+                    <div class="segmented-control" style="width: 55%;">
+                        <div class="segment-btn" id="btnKatrolOff" onclick="setKatrolModeUI(false)">Lokal</div>
+                        <div class="segment-btn active" id="btnKatrolOn" onclick="setKatrolModeUI(true)">Global</div>
+                    </div>
+                    <input type="checkbox" id="switchModeKatrol" class="hidden" onchange="toggleKatrolMode()" checked>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Tombol Aksi (Sticky) -->
+    <div class="sticky-actions glass-panel p-2 mb-3 flex flex-wrap justify-between gap-2 shadow-lg border-b border-slate-600 light-mode:border-slate-300">
+        <div class="flex gap-2 flex-grow justify-start">
+            <button onclick="addRombelUI()" class="btn-glossy btn-success flex-1 md:flex-none">➕ Rombel</button>
+            <button onclick="openTemplateModal()" class="btn-glossy bg-indigo-600 hover:bg-indigo-500 flex-1 md:flex-none">⬇️ Template</button>
+            <div class="file-upload-wrapper flex-1 md:flex-none">
+                <button class="btn-glossy bg-slate-600 hover:bg-slate-500 w-full">📁 Upload Nilai</button>
+                <input type="file" id="mainFileInput" accept=".xlsx, .xls" onchange="handleMainUpload(event)">
+            </div>
+        </div>
+        <div class="flex gap-2 flex-grow justify-end">
+            <!-- Tombol Traktir Kopi -->
+            <button onclick="openKopiModalAction()" class="btn-glossy bg-yellow-500 hover:bg-yellow-400 text-yellow-900 flex-1 md:flex-none animate-pulse">☕ Traktir Kopi</button>
+            <button onclick="openExportModal()" class="btn-glossy bg-teal-600 hover:bg-teal-500 flex-1 md:flex-none">💾 Simpan</button>
+            <button onclick="openResetModal()" class="btn-glossy btn-danger flex-1 md:flex-none">🗑️ Reset</button>
+        </div>
+    </div>
+
+    <!-- Container Rombel -->
+    <div id="rombelContainer" class="horizontal-scroll-container">
+        <!-- Injected here -->
+    </div>
+
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Modal Petunjuk Penggunaan -->
+    <div id="helpModal" class="modal-overlay" onclick="closeModal(event, 'helpModal')">
+        <div class="modal-content !max-w-2xl">
+            <h3 class="text-xl font-black text-blue-400 uppercase mb-4 text-center border-b border-slate-700 pb-2">Petunjuk Penggunaan Aplikasi</h3>
+            <div class="space-y-3 text-sm text-slate-300 light-mode:text-slate-700 pr-2">
+                <p><strong>1. Lengkapi Data Awal:</strong> Masukkan Nama Guru, Mata Pelajaran, dan target KKM/KKTP.</p>
+                <p><strong>2. Atur Skala & Batas Nilai:</strong> Pilih skala penilaian (0-10 atau 0-100), lalu tentukan Nilai Maksimal (N. Max) dan Nilai Minimal (N. Min) yang diharapkan.</p>
+                <p><strong>3. Pilih Format Desimal:</strong> Tentukan format output nilai hasil katrol (Bulat, 1 Angka Desimal, atau 2 Angka Desimal).</p>
+                <p><strong>4. Pilih Mode Katrol:</strong> Gunakan pengaturan global untuk menyeragamkan batas nilai seluruh kelas, atau matikan mode global untuk mengatur N. Max dan N. Min secara spesifik di tiap kelas.</p>
+                <p><strong>5. Tambahkan Rombel:</strong> Klik tombol "➕ Rombel" untuk menambahkan kelas sesuai dengan jumlah yang akan diolah.</p>
+                <p><strong>6. Unduh Template:</strong> Klik "⬇️ Template" untuk mengunduh format Excel, lalu salin/paste nilai mentah siswa (orisinal) ke dalam template tersebut sesuai urutan.</p>
+                <p><strong>7. Unggah Data Nilai:</strong> Klik "📁 Upload Nilai" dan pilih file Excel yang sudah diisi. Pastikan data nilai dimasukkan dengan benar.</p>
+                <p><strong>8. Tinjau Hasil Konversi:</strong> Nilai siswa akan otomatis dikatrol (dikonversi) secara proporsional sesuai dengan batas yang telah Anda tetapkan.</p>
+                <p><strong>9. Simpan Hasil:</strong> Klik "💾 Simpan" untuk mengunduh rekapitulasi nilai akhir yang sudah dikatrol dalam format Excel.</p>
+                <p><strong>10. Mulai Ulang (Reset):</strong> Gunakan tombol "🗑️ Reset" untuk menghapus data rombel dan memulai perhitungan baru dari awal.</p>
+            </div>
+            <div class="mt-6 flex justify-center">
+                <button type="button" onclick="closeModalDirect('helpModal')" class="btn-glossy bg-slate-600 px-8">Tutup Petunjuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Unduh Template -->
+    <div id="templateModal" class="modal-overlay" onclick="closeModal(event, 'templateModal')">
+        <div class="modal-content">
+            <h3 class="text-lg font-black uppercase mb-3">Unduh Template</h3>
+            <div id="templateChecklist" class="max-h-48 overflow-y-auto mb-4 bg-slate-800 light-mode:bg-slate-50 p-2 rounded border border-slate-700 light-mode:border-slate-200"></div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="closeModalDirect('templateModal')" class="btn-glossy bg-slate-600">Batal (ESC)</button>
+                <button type="button" onclick="downloadTemplateAction()" class="btn-glossy btn-primary">Unduh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Export -->
+    <div id="exportModal" class="modal-overlay" onclick="closeModal(event, 'exportModal')">
+        <div class="modal-content">
+            <h3 class="text-lg font-black uppercase mb-3">Simpan Hasil</h3>
+            <div id="exportChecklist" class="max-h-48 overflow-y-auto mb-4 bg-slate-800 light-mode:bg-slate-50 p-2 rounded border border-slate-700 light-mode:border-slate-200"></div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="closeModalDirect('exportModal')" class="btn-glossy bg-slate-600">Batal (ESC)</button>
+                <button type="button" onclick="exportToExcelAction()" class="btn-glossy btn-success">Simpan Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Success Simpan Excel -->
+    <div id="successExportModal" class="modal-overlay" onclick="closeModal(event, 'successExportModal')">
+        <div class="modal-content text-center max-w-sm mx-auto">
+            <div class="text-5xl mb-3">🎉</div>
+            <h3 class="text-xl font-black text-green-400 uppercase mb-2">Sukses!</h3>
+            <p class="text-sm font-bold text-slate-300 light-mode:text-slate-600 mb-5">Nilai sudah selesai dikatrol, silahkan cek folder Download Anda.</p>
+            
+            <button type="button" onclick="closeModalDirect('successExportModal'); openKopiModalAction();" class="btn-glossy bg-yellow-500 hover:bg-yellow-400 text-yellow-900 w-full mb-3 animate-pulse">☕ Traktir Kopi</button>
+            <p class="text-[10px] text-slate-500 mt-2 italic">Tekan ESC untuk keluar</p>
+        </div>
+    </div>
+
+    <!-- Modal Reset -->
+    <div id="resetModal" class="modal-overlay" onclick="closeModal(event, 'resetModal')">
+        <div class="modal-content">
+            <h3 class="text-lg font-black text-red-400 uppercase mb-3">Reset Data Rombel</h3>
+            <p class="text-xs mb-3">Pilih rombel yang akan direset (Dihapus dari layar):</p>
+            <div id="resetChecklist" class="max-h-48 overflow-y-auto mb-4 bg-slate-800 light-mode:bg-slate-50 p-2 rounded border border-slate-700 light-mode:border-slate-200"></div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="closeModalDirect('resetModal')" class="btn-glossy bg-slate-600">Batal (ESC)</button>
+                <button type="button" onclick="resetAllAction()" class="btn-glossy bg-red-800 hover:bg-red-700">Reset Semua</button>
+                <button type="button" onclick="resetSelectedAction()" class="btn-glossy btn-danger">Reset Terpilih</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Traktir Kopi dengan QR Code -->
+    <div id="kopiModal" class="modal-overlay" onclick="closeModal(event, 'kopiModal')">
+        <div class="modal-content text-center">
+            <h3 class="text-xl font-black text-yellow-400 uppercase mb-2">☕ Traktir Kopi Developer</h3>
+            <p class="text-sm font-bold text-slate-300 light-mode:text-slate-600">Dukungan Anda sangat berarti untuk pengembangan aplikasi ini!</p>
+            <p class="text-xs text-blue-400 mb-4 italic">(Diatas Rp 50.000 Gratis Source Code)</p>
+            
+            <div class="bg-slate-800 light-mode:bg-slate-50 p-4 rounded-lg border border-slate-700 light-mode:border-slate-300 mb-5 flex flex-col items-center gap-3">
+                
+                <!-- Container QR Code -->
+                <div class="bg-white p-3 rounded-xl border-2 border-yellow-500 shadow-md flex flex-col items-center justify-center">
+                    <div id="qrcodeCanvas"></div>
+                    <p class="text-[10px] font-black text-slate-800 mt-2 tracking-wider uppercase">Scan QR / Transfer</p>
+                </div>
+
+                <h4 class="font-black text-base text-white light-mode:text-slate-800">💳 Pulsa / Gopay / OVO</h4>
+                <div class="flex flex-col items-center w-full">
+                    <div class="flex items-center gap-2 bg-slate-900 light-mode:bg-white p-2 rounded border border-slate-600 light-mode:border-slate-300 w-full max-w-[250px] justify-between mb-2">
+                        <span id="donasiNomor" class="font-mono font-bold text-lg text-green-400 tracking-wider">085214596325</span>
+                        <button onclick="copyToClipboard('085214596325')" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-xs font-bold transition-colors">Copy</button>
+                    </div>
+                    <p class="text-[11px] font-bold text-slate-400 light-mode:text-slate-500">(Mulyono, S.Pd - Guru SMA N 1 Paguyangan)</p>
+                </div>
+            </div>
+            
+            <button type="button" onclick="closeModalDirect('kopiModal')" class="btn-glossy bg-slate-600 w-full">Tutup (ESC)</button>
+        </div>
+    </div>
+
+    <!-- Modal Upload / Mapping -->
+    <div id="uploadMapModal" class="modal-overlay" onclick="closeModal(event, 'uploadMapModal', true)">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 class="text-lg font-black uppercase mb-2">Validasi & Import Excel</h3>
+            <div id="uploadWarnings" class="mb-3 text-xs hidden"></div>
+            <div id="sheetMappingContainer" class="max-h-64 overflow-y-auto mb-4 space-y-2 pr-1"></div>
+            <div class="flex gap-2 justify-end">
+                <button type="button" onclick="closeModalDirect('uploadMapModal')" class="btn-glossy bg-slate-600">Batal (ESC)</button>
+                <button type="button" id="btnProsesUpload" onclick="processMappedUpload()" class="btn-glossy btn-primary">Import Data</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+    // --- Global State ---
+    let isDarkMode = true;
+    let rombels = [];
+    let rombelCounter = 0;
+    let tempUploadData = null; 
+    let currentSkala = "100";
+    let toastTimeout = null;
+    let currentFontSize = 16;
+    let currentDesimal = 0; // DEFAULT = OFF (0 desimal / angka bulat)
+    let qrGenerated = false;
+
+    window.onload = () => { 
+        document.body.classList.remove('light-mode');
+        toggleKatrolMode();
+        addRombelUI(); 
+        startRealtimeClock();
+    };
+
+    // --- Global Escape Key Listener for Modals ---
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            const modals = document.querySelectorAll('.modal-overlay.show');
+            modals.forEach(modal => modal.classList.remove('show'));
+        }
+    });
+
+    function showToast(msg, isSuccess = false) {
+        const t = document.getElementById('toastNotice');
+        t.innerText = msg;
+        t.style.backgroundColor = isSuccess ? '#10b981' : '#ef4444';
+        t.style.display = 'flex';
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => { t.style.display = 'none'; }, 2000);
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Nomor berhasil disalin!", true);
+        });
+    }
+
+    // --- Open Modal Kopi & Render QR Code ---
+    function openKopiModalAction() {
+        openModal('kopiModal');
+        if (!qrGenerated) {
+            const container = document.getElementById('qrcodeCanvas');
+            container.innerHTML = '';
+            new QRCode(container, {
+                text: "085214596325",
+                width: 130,
+                height: 130,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            qrGenerated = true;
+        }
+    }
+
+    // --- Font Size Scaler ---
+    function changeFontSize(direction) {
+        currentFontSize += direction * 1;
+        if (currentFontSize < 12) currentFontSize = 12;
+        if (currentFontSize > 22) currentFontSize = 22;
+        
+        document.documentElement.style.fontSize = `${currentFontSize}px`;
+        const percentage = Math.round((currentFontSize / 16) * 100);
+        document.getElementById('fontSizeDisplay').innerText = `${percentage}%`;
+    }
+
+    // --- Segmented Control Desimal ---
+    function setDesimal(val) {
+        currentDesimal = val;
+        document.getElementById('btnDes0').classList.remove('active');
+        document.getElementById('btnDes1').classList.remove('active');
+        document.getElementById('btnDes2').classList.remove('active');
+        document.getElementById('btnDes' + val).classList.add('active');
+        katrolGlobal();
+    }
+    
+    // --- Segmented Control Katrol Mode UI ---
+    function setKatrolModeUI(isGlobal) {
+        document.getElementById('switchModeKatrol').checked = isGlobal;
+        document.getElementById('btnKatrolOff').classList.toggle('active', !isGlobal);
+        document.getElementById('btnKatrolOn').classList.toggle('active', isGlobal);
+        toggleKatrolMode();
+    }
+
+    // --- Realtime Clock ---
+    function startRealtimeClock() {
+        const updateClock = () => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const dayName = days[now.getDay()];
+            const dayNum = now.getDate();
+            const monthName = months[now.getMonth()];
+            const year = now.getFullYear();
+
+            const formatted = `${hours}:${minutes}:${seconds} ${dayName}, ${dayNum} ${monthName} ${year}`;
+            document.getElementById('realtimeClock').innerText = formatted;
+        };
+        updateClock();
+        setInterval(updateClock, 1000);
+    }
+
+    function filterPositiveNumber(e) {
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
+        if (allowedKeys.includes(e.key)) return;
+        if ((e.key === '.' || e.key === ',') && !e.target.value.includes('.') && !e.target.value.includes(',')) return;
+        if (!/^[0-9]$/.test(e.key)) {
+            e.preventDefault();
+            showToast('⚠️ Hanya angka positif diperbolehkan!');
+        }
+    }
+
+    function handleEnterGlobal(e) {
+        if(e.key === 'Enter') {
+            e.target.blur(); 
+            katrolGlobal();
+        }
+    }
+
+    function handleEnterLocal(e, id) {
+        if(e.key === 'Enter') {
+            e.target.blur(); 
+            katrolNilai(id);
+            updateRombelStatsUI(id);
+        }
+    }
+
+    // --- Validation N Max & N Min (GLOBAL) ---
+    function validateGlobalTargets(el, type) {
+        let elMax = document.getElementById('globalMax');
+        let elMin = document.getElementById('globalMin');
+        let valMax = parseFloat(elMax.value.replace(',', '.'));
+        let valMin = parseFloat(elMin.value.replace(',', '.'));
+        let maxSkala = parseFloat(document.getElementById('skala').value);
+
+        if (type === 'max') {
+            if (isNaN(valMax) || valMax < 0 || valMax > maxSkala) {
+                showToast(`⚠️ N Max tidak valid (0 - ${maxSkala})`);
+                elMax.value = elMax.getAttribute('data-last');
+                return;
+            }
+            if (!isNaN(valMin) && valMax <= valMin) {
+                showToast("⚠️ N Max harus lebih besar dari N Min!");
+                elMax.value = elMax.getAttribute('data-last');
+                return;
+            }
+            elMax.setAttribute('data-last', valMax);
+        } 
+        else if (type === 'min') {
+            if (isNaN(valMin) || valMin < 0 || valMin > maxSkala) {
+                showToast(`⚠️ N Min tidak valid (0 - ${maxSkala})`);
+                elMin.value = elMin.getAttribute('data-last');
+                return;
+            }
+            if (!isNaN(valMax) && valMin >= valMax) {
+                showToast("⚠️ N Min harus lebih kecil dari N Max!");
+                elMin.value = elMin.getAttribute('data-last');
+                return;
+            }
+            elMin.setAttribute('data-last', valMin);
+        }
+        katrolGlobal();
+    }
+
+    // --- Validation N Max & N Min (PER KELAS) ---
+    function validateClassTargets(id, el, type) {
+        let r = rombels.find(x => x.id === id);
+        if (!r) return;
+        
+        let elMax = document.getElementById(`max_${id}`);
+        let elMin = document.getElementById(`min_${id}`);
+        let valMax = parseFloat(elMax.value.replace(',', '.'));
+        let valMin = parseFloat(elMin.value.replace(',', '.'));
+        let maxSkala = parseFloat(document.getElementById('skala').value);
+
+        if (type === 'max') {
+            if (isNaN(valMax) || valMax < 0 || valMax > maxSkala) {
+                showToast(`⚠️ N Max tidak valid (0 - ${maxSkala})`);
+                elMax.value = r.maxTarget; 
+                return;
+            }
+            if (!isNaN(valMin) && valMax <= valMin) {
+                showToast("⚠️ N Max harus lebih besar dari N Min!");
+                elMax.value = r.maxTarget;
+                return;
+            }
+            r.maxTarget = valMax;
+        } 
+        else if (type === 'min') {
+            if (isNaN(valMin) || valMin < 0 || valMin > maxSkala) {
+                showToast(`⚠️ N Min tidak valid (0 - ${maxSkala})`);
+                elMin.value = r.minTarget; 
+                return;
+            }
+            if (!isNaN(valMax) && valMin >= valMax) {
+                showToast("⚠️ N Min harus lebih kecil dari N Max!");
+                elMin.value = r.minTarget;
+                return;
+            }
+            r.minTarget = valMin;
+        }
+        
+        katrolNilai(id);
+        updateRombelStatsUI(id);
+    }
+
+    function confirmSkalaChange(selectEl) {
+        const newSkala = selectEl.value;
+        const hasData = rombels.some(r => r.data && r.data.some(d => d.raw !== null));
+
+        if (hasData) {
+            const pesan = newSkala === "10" 
+                ? "Apakah skala nilai akan diganti ke Satuan (0-10)? Nilai yang sudah ada akan tereset."
+                : "Apakah skala nilai akan diganti ke Puluhan (0-100)? Nilai yang sudah ada akan tereset.";
+            
+            if (!confirm(pesan)) {
+                selectEl.value = currentSkala;
+                return;
+            }
+            rombels.forEach(r => { r.data.forEach(d => { d.raw = null; d.katrol = null; }); });
+        }
+
+        currentSkala = newSkala;
+        let max = newSkala === "100" ? 100 : 10;
+        let defMax = max === 100 ? 95 : 9.5;
+        let defMin = max === 100 ? 75 : 7.5;
+        
+        let elMax = document.getElementById('globalMax');
+        let elMin = document.getElementById('globalMin');
+        
+        elMax.value = defMax;
+        elMin.value = defMin;
+        elMax.setAttribute('data-last', defMax);
+        elMin.setAttribute('data-last', defMin);
+        document.getElementById('globalKkm').value = defMin;
+        
+        rombels.forEach(r => {
+            r.minTarget = defMin;
+            r.maxTarget = defMax;
+        });
+
+        renderRombels();
+    }
+
+    function toggleTheme() {
+        isDarkMode = !isDarkMode;
+        if (isDarkMode) {
+            document.body.classList.remove('light-mode');
+            document.getElementById('themeToggle').innerHTML = '☀️';
+            document.getElementById('themeToggle').classList.replace('bg-slate-800', 'bg-slate-600');
+        } else {
+            document.body.classList.add('light-mode');
+            document.getElementById('themeToggle').innerHTML = '🌙';
+            document.getElementById('themeToggle').classList.replace('bg-slate-600', 'bg-slate-800');
+        }
+    }
+
+    function toggleKatrolMode() {
+        const isGlobal = document.getElementById('switchModeKatrol').checked;
+        const gMin = document.getElementById('globalMin');
+        const gMax = document.getElementById('globalMax');
+        
+        gMin.disabled = !isGlobal;
+        gMax.disabled = !isGlobal;
+
+        if(!isGlobal) {
+            gMin.classList.add('opacity-50', 'cursor-not-allowed');
+            gMax.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            gMin.classList.remove('opacity-50', 'cursor-not-allowed');
+            gMax.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        katrolGlobal();
+    }
+
+    // --- Modal Handlers ---
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModalDirect(id) { document.getElementById(id).classList.remove('show'); }
+    function closeModal(e, id, blockOverlay = false) {
+        if (e.target.id === id && !blockOverlay) closeModalDirect(id);
+    }
+
+    // --- Rombel Logic ---
+    function addRombelUI(name = null) {
+        rombelCounter++;
+        const rId = rombelCounter;
+        const skala = document.getElementById('skala').value;
+        const defaultMax = skala === "100" ? 95 : 9.5;
+        const defaultMin = skala === "100" ? 75 : 7.5;
+        
+        // Buat 50 baris default kosong untuk setiap rombel baru agar tampilan langsung penuh 50 siswa
+        let defaultData = [];
+        for(let i = 1; i <= 50; i++) {
+            defaultData.push({ no: i, raw: null, katrol: null, _isDiapitKosong: false });
+        }
+        
+        rombels.push({
+            id: rId,
+            name: name || `Kelas ${rId}`,
+            minTarget: defaultMin,
+            maxTarget: defaultMax,
+            data: defaultData,
+            stats: { rawMax: '-', rawMin: '-', rawAvg: '-', katMax: '-', katMin: '-', katAvg: '-' }
+        });
+        renderRombels();
+    }
+
+    function confirmRemoveRombel(id) {
+        const r = rombels.find(x => x.id === id);
+        if (!r) return;
+        
+        // Cek apakah rombel sudah memiliki data (selain null/kosong)
+        const hasData = r.data.some(d => d.raw !== null && String(d.raw).trim() !== "");
+        if (hasData) {
+            if(!confirm("⚠️ PERINGATAN: Rombel ini sudah memiliki isi nilai!\n\nAnda yakin ingin menghapusnya? Data nilai yang sudah masuk akan hilang.")) {
+                return;
+            }
+        }
+        removeRombel(id);
+    }
+
+    function removeRombel(id) {
+        rombels = rombels.filter(r => r.id !== id);
+        renderRombels();
+    }
+
+    function updateRombelName(id, val) {
+        const r = rombels.find(x => x.id === id);
+        if(r) r.name = val;
+    }
+
+    function updateDashboard() {
+        document.getElementById('dashTotalRombel').innerText = rombels.length;
+        
+        let totalKosongNol = 0;
+        rombels.forEach(r => {
+            if (r.data && r.data.length > 0) {
+                let lastValidIndex = -1;
+                for (let i = r.data.length - 1; i >= 0; i--) {
+                    if (r.data[i].raw !== null && !isNaN(r.data[i].raw) && String(r.data[i].raw).trim() !== "") {
+                        lastValidIndex = i;
+                        break;
+                    }
+                }
+                
+                if (lastValidIndex !== -1) {
+                    for (let i = 0; i <= lastValidIndex; i++) {
+                        let d = r.data[i];
+                        if (d.raw === null || isNaN(d.raw) || d.raw === 0 || d.raw === "0" || String(d.raw).trim() === "") {
+                            totalKosongNol++;
+                            d._isDiapitKosong = true;
+                        } else {
+                            d._isDiapitKosong = false;
+                        }
+                    }
+                    for (let i = lastValidIndex + 1; i < r.data.length; i++) {
+                        r.data[i]._isDiapitKosong = false;
+                    }
+                }
+            }
+        });
+        document.getElementById('dashTotalKosong').innerText = totalKosongNol;
+    }
+
+    // --- Reset Logic ---
+    function openResetModal() { generateChecklist('resetChecklist'); openModal('resetModal'); }
+    function resetSelectedAction() {
+        const cbs = document.querySelectorAll('.resetChecklist-cb:checked');
+        cbs.forEach(cb => removeRombel(parseInt(cb.value)));
+        closeModalDirect('resetModal');
+    }
+    function resetAllAction() {
+        if(confirm("Yakin hapus semua rombel?")) { rombels = []; renderRombels(); closeModalDirect('resetModal'); }
+    }
+
+    // --- Excel Upload (Mendukung Titik & Koma Otomatis) ---
+    function handleMainUpload(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            
+            tempUploadData = { workbook: workbook, sheets: workbook.SheetNames, parsedData: {} };
+            buildSheetMappingUI();
+            openModal('uploadMapModal');
+            event.target.value = ''; 
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function buildSheetMappingUI() {
+        const container = document.getElementById('sheetMappingContainer');
+        const warnings = document.getElementById('uploadWarnings');
+        const btnProses = document.getElementById('btnProsesUpload');
+        const skalaMax = parseFloat(document.getElementById('skala').value);
+        
+        container.innerHTML = ''; warnings.innerHTML = ''; warnings.classList.add('hidden');
+        let blockImport = false; let warningMsgs = []; let errorMsgs = [];
+
+        tempUploadData.sheets.forEach(sheetName => {
+            const sheet = tempUploadData.workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(sheet, {header: 1});
+            
+            let sheetData = []; let invalidCount = 0, zeroCount = 0, emptyCount = 0;
+
+            for(let i=1; i<json.length; i++) {
+                const row = json[i];
+                if(row.length > 0 && row[0] !== undefined) {
+                    const no = row[0];
+                    const rawStr = row.length > 1 ? row[1] : undefined; 
+                    
+                    let raw = null;
+                    if(rawStr === undefined || rawStr === null || String(rawStr).trim() === "") {
+                        emptyCount++;
+                    } else {
+                        // OTOMATIS KONVERSI KOMA (,) DAN TITIK (.) UNTUK DESIMAL IDENTIK
+                        let strVal = String(rawStr).trim().replace(',', '.');
+                        if (!/^\d+(\.\d+)?$/.test(strVal)) {
+                            invalidCount++;
+                        } else {
+                            let parsed = parseFloat(strVal);
+                            if (parsed < 0 || parsed > skalaMax) invalidCount++;
+                            else if (parsed === 0) zeroCount++;
+                            else raw = parsed;
+                            if(parsed >= 0 && parsed <= skalaMax) raw = parsed;
+                        }
+                    }
+                    sheetData.push({ no, raw, katrol: null, _isDiapitKosong: false });
+                }
+            }
+            tempUploadData.parsedData[sheetName] = sheetData;
+            
+            let statusHtml = `<span class="text-green-400 text-[10px] font-bold px-2 py-1 rounded bg-green-900/30">OK (${sheetData.length})</span>`;
+            if (invalidCount > 0) {
+                blockImport = true;
+                statusHtml = `<span class="text-red-400 text-[10px] font-bold px-2 py-1 rounded bg-red-900/30">❌ INVALID (${invalidCount})</span>`;
+                errorMsgs.push(`Sheet <b>${sheetName}</b>: Ada nilai huruf/simbol atau di luar rentang (0-${skalaMax}).`);
+            } else if (emptyCount > 0 || zeroCount > 0) {
+                statusHtml = `<span class="text-yellow-400 text-[10px] font-bold px-2 py-1 rounded bg-yellow-900/30">⚠️ KOSONG/NOL</span>`;
+                warningMsgs.push(`Sheet <b>${sheetName}</b>: Ada nilai kosong atau 0.`);
+            }
+
+            let rombelOpts = `<option value="">-- Abaikan --</option><option value="new" selected>+ Rombel Baru</option>`;
+            rombels.forEach(r => {
+                let isMatch = r.name.toLowerCase() === sheetName.toLowerCase();
+                rombelOpts += `<option value="${r.id}" ${isMatch ? 'selected' : ''}>Timpa ${r.name}</option>`;
+            });
+
+            container.insertAdjacentHTML('beforeend', `
+                <div class="flex items-center justify-between p-2 bg-slate-700 light-mode:bg-white rounded border border-slate-600 light-mode:border-slate-200">
+                    <div class="truncate w-1/2"><p class="font-bold text-xs truncate">${sheetName}</p><div class="mt-1">${statusHtml}</div></div>
+                    <select class="input-soft !py-1 !text-xs w-1/2 sheet-map-select" data-sheet="${sheetName}">${rombelOpts}</select>
+                </div>
+            `);
+        });
+
+        if (errorMsgs.length > 0 || warningMsgs.length > 0) {
+            let html = [];
+            if(errorMsgs.length > 0) html.push(`<div class="p-2 bg-red-900/40 text-red-200 border border-red-500 rounded">${errorMsgs.join('<br>')}</div>`);
+            if(warningMsgs.length > 0) html.push(`<div class="p-2 bg-yellow-900/40 text-yellow-200 border border-yellow-500 rounded">${warningMsgs.join('<br>')}</div>`);
+            warnings.innerHTML = html.join(''); warnings.classList.remove('hidden');
+        }
+
+        if (blockImport) {
+            btnProses.innerText = "Wajib Revisi Nilai"; btnProses.disabled = true; btnProses.classList.replace('btn-primary', 'btn-danger');
+        } else {
+            btnProses.innerText = "Import Data"; btnProses.disabled = false; btnProses.classList.replace('btn-danger', 'btn-primary');
+        }
+    }
+
+    function processMappedUpload() {
+        document.querySelectorAll('.sheet-map-select').forEach(sel => {
+            const target = sel.value;
+            const data = tempUploadData.parsedData[sel.getAttribute('data-sheet')];
+            if (target === '') return;
+            
+            if (target === 'new') {
+                addRombelUI(sel.getAttribute('data-sheet'));
+                rombels[rombels.length - 1].data = data;
+            } else {
+                const r = rombels.find(x => x.id === parseInt(target));
+                if(r) r.data = data;
+            }
+        });
+        closeModalDirect('uploadMapModal');
+        tempUploadData = null;
+        katrolGlobal();
+    }
+
+    // --- Math Logic ---
+    function hitungStatistik(r) {
+        const rawValid = r.data.map(d => d.raw).filter(v => v !== null && !isNaN(v));
+        if(rawValid.length > 0) {
+            r.stats.rawMax = Math.max(...rawValid).toFixed(1).replace('.0','');
+            r.stats.rawMin = Math.min(...rawValid).toFixed(1).replace('.0','');
+            r.stats.rawAvg = (rawValid.reduce((a,b) => a+b, 0) / rawValid.length).toFixed(1);
+        } else {
+            r.stats.rawMax = '-'; r.stats.rawMin = '-'; r.stats.rawAvg = '-';
+        }
+
+        const katValid = r.data.map(d => d.katrol).filter(v => v !== null && !isNaN(v));
+        if(katValid.length > 0) {
+            r.stats.katMax = Math.max(...katValid).toFixed(1).replace('.0','');
+            r.stats.katMin = Math.min(...katValid).toFixed(1).replace('.0','');
+            r.stats.katAvg = (katValid.reduce((a,b) => a+b, 0) / katValid.length).toFixed(1);
+        } else {
+            r.stats.katMax = '-'; r.stats.katMin = '-'; r.stats.katAvg = '-';
+        }
+    }
+
+    function katrolNilai(id) {
+        const r = rombels.find(x => x.id === id);
+        if (!r) return;
+        
+        const skalaMax = parseFloat(document.getElementById('skala').value);
+        const kkm = parseFloat(document.getElementById('globalKkm').value) || 0;
+        const desimalVal = currentDesimal;
+        const isGlobal = document.getElementById('switchModeKatrol').checked;
+        
+        let minT, maxT;
+        if (isGlobal) {
+            minT = parseFloat(document.getElementById('globalMin').value) || kkm;
+            maxT = parseFloat(document.getElementById('globalMax').value) || skalaMax;
+        } else {
+            minT = r.minTarget;
+            maxT = r.maxTarget;
+        }
+
+        const batasNMax = isGlobal ? parseFloat(document.getElementById('globalMax').value) : r.maxTarget;
+
+        const valid = r.data.map(d => d.raw).filter(v => v !== null && !isNaN(v));
+        const validKatrol = valid.filter(v => v <= batasNMax);
+
+        if(valid.length === 0) {
+            hitungStatistik(r);
+            return;
+        }
+
+        const rawMin = validKatrol.length > 0 ? Math.min(...validKatrol) : Math.min(...valid);
+        const rawMax = validKatrol.length > 0 ? Math.max(...validKatrol) : Math.max(...valid);
+
+        r.data.forEach(d => {
+            if(d.raw !== null && !isNaN(d.raw)) {
+                if (d.raw > batasNMax) {
+                    d.katrol = d.raw;
+                } else {
+                    let k = rawMax === rawMin ? maxT : minT + ((d.raw - rawMin) / (rawMax - rawMin)) * (maxT - minT);
+                    if (desimalVal === 0) {
+                        d.katrol = Math.round(k);
+                    } else if (desimalVal === 1) {
+                        d.katrol = parseFloat(k.toFixed(1));
+                    } else {
+                        d.katrol = parseFloat(k.toFixed(2));
+                    }
+                }
+            } else {
+                d.katrol = d.raw; 
+            }
+        });
+        
+        hitungStatistik(r);
+    }
+
+    function katrolGlobal() {
+        updateDashboard(); 
+        rombels.forEach(r => katrolNilai(r.id));
+        renderRombels();
+    }
+
+    function updateRombelStatsUI(id) {
+        const r = rombels.find(x => x.id === id);
+        if (!r) return;
+        
+        document.getElementById(`stat-rawMax-${id}`).innerText = r.stats.rawMax;
+        document.getElementById(`stat-rawMin-${id}`).innerText = r.stats.rawMin;
+        document.getElementById(`stat-rawAvg-${id}`).innerText = r.stats.rawAvg;
+        document.getElementById(`stat-katMax-${id}`).innerText = r.stats.katMax;
+        document.getElementById(`stat-katMin-${id}`).innerText = r.stats.katMin;
+        document.getElementById(`stat-katAvg-${id}`).innerText = r.stats.katAvg;
+
+        const kkm = parseFloat(document.getElementById('globalKkm').value) || 0;
+        let tableRows = '';
+
+        const validRaws = r.data.map(d => d.raw).filter(v => v !== null && !isNaN(v));
+        const numMax = validRaws.length > 0 ? Math.max(...validRaws) : null;
+        const numMin = validRaws.length > 0 ? Math.min(...validRaws) : null;
+
+        if(r.data.length === 0) {
+            tableRows = `<tr><td colspan="3" class="py-6 text-slate-500">Data Kosong</td></tr>`;
+        } else {
+            r.data.forEach(d => {
+                const isEmpty = d.raw === null || isNaN(d.raw) || String(d.raw).trim() === "";
+                const isBelowKKM = !isEmpty && d.raw < kkm;
+                const isKatrolBelow = d.katrol !== null && d.katrol < kkm;
+                
+                let rowClass = '';
+                if (isEmpty) {
+                    rowClass = d._isDiapitKosong ? 'row-empty-highlight' : 'row-empty';
+                } else if (numMax !== null && numMin !== null) {
+                    if (d.raw === numMax) rowClass = 'row-max-highlight';
+                    else if (d.raw === numMin) rowClass = 'row-min-highlight';
+                }
+
+                let rawStyle = isBelowKKM ? "color:#ef4444; font-weight:900;" : "font-bold";
+                let katrolStyle = isKatrolBelow ? "color:#ef4444; font-weight:900;" : "color:#3b82f6; font-weight:900;";
+                
+                // Simbol Indikator
+                let icon = '';
+                if (!isEmpty && d.katrol !== null) {
+                    if (d.katrol > d.raw) icon = `<span class="text-green-500 font-black ml-1 text-xs">▲</span>`;
+                    else if (d.katrol < d.raw) icon = `<span class="text-red-500 font-black ml-1 text-xs">▼</span>`;
+                    else icon = `<span class="text-yellow-500 font-black ml-1 text-xs">=</span>`;
+                }
+
+                tableRows += `
+                    <tr class="${rowClass}">
+                        <td class="font-bold w-12">${d.no}</td>
+                        <td style="${rawStyle}">${isEmpty ? '-' : d.raw}</td>
+                        <td style="${katrolStyle}">
+                            <div class="flex items-center justify-center gap-1">
+                                <span>${d.katrol === null || String(d.katrol).trim() === "" ? '-' : d.katrol}</span>
+                                ${icon}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        document.getElementById(`tbody-${id}`).innerHTML = tableRows;
+        updateDashboard();
+    }
+
+    // --- Render UI ---
+    function renderRombels() {
+        const container = document.getElementById('rombelContainer');
+        const kkm = parseFloat(document.getElementById('globalKkm').value) || 0;
+        const isGlobal = document.getElementById('switchModeKatrol').checked;
+        container.innerHTML = '';
+        
+        updateDashboard(); 
+        if (rombels.length === 0) return;
+
+        rombels.forEach(r => {
+            let tableRows = '';
+            
+            const validRaws = r.data.map(d => d.raw).filter(v => v !== null && !isNaN(v));
+            const numMax = validRaws.length > 0 ? Math.max(...validRaws) : null;
+            const numMin = validRaws.length > 0 ? Math.min(...validRaws) : null;
+
+            if(r.data.length === 0) {
+                tableRows = `<tr><td colspan="3" class="py-6 text-slate-500">Data Kosong</td></tr>`;
+            } else {
+                r.data.forEach(d => {
+                    const isEmpty = d.raw === null || isNaN(d.raw) || String(d.raw).trim() === "";
+                    const isBelowKKM = !isEmpty && d.raw < kkm;
+                    const isKatrolBelow = d.katrol !== null && d.katrol < kkm;
+                    
+                    let rowClass = '';
+                    if (isEmpty) {
+                        rowClass = d._isDiapitKosong ? 'row-empty-highlight' : 'row-empty';
+                    } else if (numMax !== null && numMin !== null) {
+                        if (d.raw === numMax) rowClass = 'row-max-highlight';
+                        else if (d.raw === numMin) rowClass = 'row-min-highlight';
+                    }
+
+                    let rawStyle = isBelowKKM ? "color:#ef4444; font-weight:900;" : "font-bold";
+                    let katrolStyle = isKatrolBelow ? "color:#ef4444; font-weight:900;" : "color:#3b82f6; font-weight:900;";
+                    
+                    // Simbol Indikator
+                    let icon = '';
+                    if (!isEmpty && d.katrol !== null) {
+                        if (d.katrol > d.raw) icon = `<span class="text-green-500 font-black ml-1 text-xs">▲</span>`;
+                        else if (d.katrol < d.raw) icon = `<span class="text-red-500 font-black ml-1 text-xs">▼</span>`;
+                        else icon = `<span class="text-yellow-500 font-black ml-1 text-xs">=</span>`;
+                    }
+
+                    tableRows += `
+                        <tr class="${rowClass}">
+                            <td class="font-bold w-12">${d.no}</td>
+                            <td style="${rawStyle}">${isEmpty ? '-' : d.raw}</td>
+                            <td style="${katrolStyle}">
+                                <div class="flex items-center justify-center gap-1">
+                                    <span>${d.katrol === null || String(d.katrol).trim() === "" ? '-' : d.katrol}</span>
+                                    ${icon}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const disAttr = isGlobal ? 'disabled' : '';
+            // Efek menyala pada N.Max dan N.Min jika mode Katrol Terpusat / Global NON-AKTIF
+            const glowClassMax = !isGlobal ? 'glowing-active-max' : '';
+            const glowClassMin = !isGlobal ? 'glowing-active-min' : '';
+
+            // DESAIN HEADER: Font N Max & N Min Diperbesar Seukuran Nama Rombel
+            const headerGrid = `
+                <div class="grid grid-cols-3 gap-1.5 items-center w-full">
+                    
+                    <!-- Kolom 1: Nama & Target (Font diperbesar setara) -->
+                    <div class="flex flex-col gap-1.5 w-full">
+                        <input type="text" 
+                               class="input-capsule !w-full !text-[12px] font-extrabold uppercase tracking-tight" 
+                               value="${r.name}" 
+                               onchange="updateRombelName(${r.id}, this.value)">
+                        
+                        <div class="flex justify-between items-center px-0.5">
+                            <span class="text-[9px] font-black text-green-400">N.Max</span>
+                            <input type="text" id="max_${r.id}" ${disAttr} value="${r.maxTarget}" 
+                                   onkeydown="filterPositiveNumber(event)" onkeyup="handleEnterLocal(event, ${r.id})" onchange="validateClassTargets(${r.id}, this, 'max')" 
+                                   class="input-capsule !w-14 !py-0.5 !px-1 !text-[12px] font-extrabold text-green-400 ${glowClassMax}">
+                        </div>
+                        <div class="flex justify-between items-center px-0.5">
+                            <span class="text-[9px] font-black text-red-400">N.Min</span>
+                            <input type="text" id="min_${r.id}" ${disAttr} value="${r.minTarget}" 
+                                   onkeydown="filterPositiveNumber(event)" onkeyup="handleEnterLocal(event, ${r.id})" onchange="validateClassTargets(${r.id}, this, 'min')" 
+                                   class="input-capsule !w-14 !py-0.5 !px-1 !text-[12px] font-extrabold text-red-400 ${glowClassMin}">
+                        </div>
+                    </div>
+                    
+                    <!-- Kolom 2: Data Asli -->
+                    <div class="flex flex-col gap-1 text-[10px]">
+                        <div class="stat-capsule !px-1.5"><span class="text-slate-400 text-[9px]">Max Ori</span><span class="text-green-400" id="stat-rawMax-${r.id}">${r.stats.rawMax}</span></div>
+                        <div class="stat-capsule !px-1.5"><span class="text-slate-400 text-[9px]">Min Ori</span><span class="text-red-400" id="stat-rawMin-${r.id}">${r.stats.rawMin}</span></div>
+                        <div class="stat-capsule !px-1.5"><span class="text-slate-400 text-[9px]">Rata2 Ori</span><span class="text-yellow-400" id="stat-rawAvg-${r.id}">${r.stats.rawAvg}</span></div>
+                    </div>
+
+                    <!-- Kolom 3: Data Katrol -->
+                    <div class="flex flex-col gap-1 text-[10px]">
+                        <div class="stat-capsule !px-1.5"><span class="text-blue-400 text-[9px]">Max Skrg</span><span class="text-green-400" id="stat-katMax-${r.id}">${r.stats.katMax}</span></div>
+                        <div class="stat-capsule !px-1.5"><span class="text-blue-400 text-[9px]">Min Skrg</span><span class="text-red-400" id="stat-katMin-${r.id}">${r.stats.katMin}</span></div>
+                        <div class="stat-capsule !px-1.5"><span class="text-blue-400 text-[9px]">Rata2 Skrg</span><span class="text-yellow-400" id="stat-katAvg-${r.id}">${r.stats.katAvg}</span></div>
+                    </div>
+
+                </div>
+            `;
+
+            const html = `
+            <div class="rombel-card glass-panel relative group">
+                <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <button onclick="confirmRemoveRombel(${r.id})" class="bg-red-500 text-white rounded-full w-6 h-6 font-black hover:bg-red-600 text-xs flex items-center justify-center shadow-lg" title="Hapus Rombel">✕</button>
+                </div>
+                
+                <!-- Header Statis -->
+                <div class="rombel-header-static">
+                    ${headerGrid}
+                </div>
+
+                <!-- Tabel area (Full Height tanpa scroll internal) -->
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>No</th><th>Nilai Asli</th><th>Nilai Katrol</th></tr></thead>
+                        <tbody id="tbody-${r.id}">${tableRows}</tbody>
+                    </table>
+                </div>
+            </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    }
+
+    // --- Export & Template ---
+    function generateChecklist(containerId) {
+        const c = document.getElementById(containerId);
+        if(rombels.length === 0) { c.innerHTML = '<p class="text-xs italic">Belum ada rombel.</p>'; return false; }
+        
+        let html = '';
+        rombels.forEach(r => {
+            html += `<label class="flex items-center gap-2 p-2 bg-slate-700 light-mode:bg-white rounded shadow-sm border border-slate-600 light-mode:border-slate-200 cursor-pointer mb-1">
+                        <input type="checkbox" class="${containerId}-cb accent-blue-600" value="${r.id}" checked>
+                        <span class="font-bold text-xs uppercase">${r.name}</span>
+                    </label>`;
+        });
+        c.innerHTML = html;
+        return true;
+    }
+
+    function openTemplateModal() { if(generateChecklist('templateChecklist')) openModal('templateModal'); }
+    function openExportModal() { if(generateChecklist('exportChecklist')) openModal('exportModal'); }
+
+    function downloadTemplateAction() {
+        const cbs = document.querySelectorAll('.templateChecklist-cb:checked');
+        if(cbs.length === 0) return;
+        const wb = XLSX.utils.book_new();
+        
+        cbs.forEach(cb => {
+            const r = rombels.find(x => x.id === parseInt(cb.value));
+            const wsData = [["No", "Nilai Mentah"]];
+            for(let i=1; i<=50; i++) wsData.push([i, ""]);
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            ws['!cols'] = [{wch: 6}, {wch: 15}];
+            let sName = (r ? r.name : "Template").substring(0, 31).replace(/[\/?*\[\]]/g, '');
+            try { XLSX.utils.book_append_sheet(wb, ws, sName); } catch(e) { XLSX.utils.book_append_sheet(wb, ws, `T_${Date.now()}`); }
+        });
+        XLSX.writeFile(wb, "Template_Nilai.xlsx");
+        closeModalDirect('templateModal');
+    }
+
+    function exportToExcelAction() {
+        const cbs = document.querySelectorAll('.exportChecklist-cb:checked');
+        if(cbs.length === 0) return;
+        
+        const wb = XLSX.utils.book_new();
+        let rawM = document.getElementById('mapel').value.trim() || "Mapel";
+        let rawG = document.getElementById('guru').value.trim() || "Guru";
+        let k = document.getElementById('globalKkm').value || 75;
+        let hasData = false;
+        
+        // Membersihkan karakter yang tidak didukung untuk nama file
+        let cleanM = rawM.replace(/[^a-zA-Z0-9_\- ]/g, '');
+        let cleanG = rawG.replace(/[^a-zA-Z0-9_\- ]/g, '');
+        
+        cbs.forEach(cb => {
+            const r = rombels.find(x => x.id === parseInt(cb.value));
+            if(r && r.data.length > 0) {
+                hasData = true;
+                const wsData = [
+                    ["Mata Pelajaran :", rawM], ["Nama Guru :", rawG], ["Kelas :", r.name], ["KKM :", k], [],
+                    ["No", "Nilai Asli", "Nilai Katrol"]
+                ];
+                r.data.forEach(d => wsData.push([d.no, d.raw !== null ? d.raw : "", d.katrol !== null ? d.katrol : ""]));
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                ws['!cols'] = [{wch:6}, {wch:12}, {wch:12}];
+                let sName = r.name.substring(0, 31).replace(/[\/?*\[\]]/g, '');
+                try { XLSX.utils.book_append_sheet(wb, ws, sName || "Sheet1"); } catch(e) { XLSX.utils.book_append_sheet(wb, ws, `R_${r.id}`); }
+            }
+        });
+
+        if(!hasData) { alert("Data kosong."); return; }
+        
+        let finalFileName = `${cleanG} - ${cleanM}.xlsx`;
+        XLSX.writeFile(wb, finalFileName);
+        closeModalDirect('exportModal');
+        
+        openModal('successExportModal');
+    }
+</script>
+</body>
+</html>
